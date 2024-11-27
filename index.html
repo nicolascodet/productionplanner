@@ -413,5 +413,132 @@
             container.innerHTML = html;
         }
     </script>
+    <!-- Previous HTML remains the same until the script section -->
+
+<script>
+    let machines = [];
+    let parts = [];
+
+    // Load saved data when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSavedData();
+    });
+
+    function loadSavedData() {
+        // Load machines
+        const savedMachines = localStorage.getItem('machines');
+        if (savedMachines) {
+            machines = JSON.parse(savedMachines);
+            // Reconstruct the methods that were lost in storage
+            machines = machines.map(machine => ({
+                ...machine,
+                getAvailableTime: function() {
+                    return this.shiftsPerDay * this.hoursPerShift * this.daysPerMonth * 60;
+                }
+            }));
+            updateMachineList();
+            updateMachineCheckboxes();
+        }
+
+        // Load parts
+        const savedParts = localStorage.getItem('parts');
+        if (savedParts) {
+            parts = JSON.parse(savedParts);
+            // Reconstruct the methods that were lost in storage
+            parts = parts.map(part => ({
+                ...part,
+                getTimeNeeded: function() {
+                    return this.cycleTime * this.quantity;
+                }
+            }));
+            updatePartList();
+        }
+    }
+
+    function saveMachines() {
+        localStorage.setItem('machines', JSON.stringify(machines));
+    }
+
+    function saveParts() {
+        localStorage.setItem('parts', JSON.stringify(parts));
+    }
+
+    function addMachine() {
+        const machine = {
+            name: document.getElementById('machineName').value,
+            shiftsPerDay: parseInt(document.getElementById('shiftsPerDay').value),
+            hoursPerShift: parseInt(document.getElementById('hoursPerShift').value),
+            daysPerMonth: parseInt(document.getElementById('daysPerMonth').value),
+            getAvailableTime: function() {
+                return this.shiftsPerDay * this.hoursPerShift * this.daysPerMonth * 60;
+            }
+        };
+
+        machines.push(machine);
+        updateMachineList();
+        updateMachineCheckboxes();
+        saveMachines(); // Save after adding
+        document.getElementById('machineForm').reset();
+    }
+
+    function addPart() {
+        const checkboxes = document.querySelectorAll('#machineCheckboxes input:checked');
+        const compatibleMachines = Array.from(checkboxes).map(cb => cb.value);
+
+        if (compatibleMachines.length === 0) {
+            alert('Please select at least one compatible machine');
+            return;
+        }
+
+        const part = {
+            name: document.getElementById('partName').value,
+            cycleTime: parseInt(document.getElementById('cycleTime').value),
+            quantity: parseInt(document.getElementById('quantity').value),
+            compatibleMachines: compatibleMachines,
+            getTimeNeeded: function() {
+                return this.cycleTime * this.quantity;
+            }
+        };
+
+        parts.push(part);
+        updatePartList();
+        saveParts(); // Save after adding
+        document.getElementById('partForm').reset();
+    }
+
+    function deleteMachine(index) {
+        machines.splice(index, 1);
+        updateMachineList();
+        updateMachineCheckboxes();
+        saveMachines(); // Save after deleting
+    }
+
+    function deletePart(index) {
+        parts.splice(index, 1);
+        updatePartList();
+        saveParts(); // Save after deleting
+    }
+
+    // Add a clear data button to the interface
+    function clearAllData() {
+        if (confirm('Are you sure you want to clear all saved data?')) {
+            localStorage.clear();
+            machines = [];
+            parts = [];
+            updateMachineList();
+            updateMachineCheckboxes();
+            updatePartList();
+        }
+    }
+
+    // Add this button to your HTML, perhaps in the header or as a separate card
+    document.querySelector('.header').innerHTML += `
+        <button onclick="clearAllData()" style="background: #ef4444; margin-top: 1rem;">
+            Clear All Data
+        </button>
+    `;
+
+    // Rest of your previous JavaScript code remains the same...
+    </script>
 </body>
 </html>
