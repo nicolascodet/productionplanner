@@ -245,8 +245,10 @@
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
             loadSavedData();
+            setupEventListeners();
+        });
 
-            // Add form submit handlers
+        function setupEventListeners() {
             document.getElementById('machineForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 addMachine();
@@ -256,7 +258,7 @@
                 e.preventDefault();
                 addPart();
             });
-        });
+        }
 
         function loadSavedData() {
             const savedMachines = localStorage.getItem('machines');
@@ -287,25 +289,11 @@
         }
 
         function saveMachines() {
-            localStorage.setItem('machines', JSON.stringify(
-                machines.map(m => ({
-                    name: m.name,
-                    shiftsPerDay: m.shiftsPerDay,
-                    hoursPerShift: m.hoursPerShift,
-                    daysPerMonth: m.daysPerMonth
-                }))
-            ));
+            localStorage.setItem('machines', JSON.stringify(machines));
         }
 
         function saveParts() {
-            localStorage.setItem('parts', JSON.stringify(
-                parts.map(p => ({
-                    name: p.name,
-                    cycleTime: p.cycleTime,
-                    quantity: p.quantity,
-                    compatibleMachines: p.compatibleMachines
-                }))
-            ));
+            localStorage.setItem('parts', JSON.stringify(parts));
         }
 
         function clearAllData() {
@@ -455,8 +443,6 @@
                 html += '<p>No valid schedule could be generated. Please check machine capacities and part requirements.</p>';
             } else {
                 const machineSchedules = new Map();
-                // Group by machine
-                const machineSchedules = new Map();
                 schedule.forEach(item => {
                     if (!machineSchedules.has(item.machine)) {
                         machineSchedules.set(item.machine, []);
@@ -464,11 +450,10 @@
                     machineSchedules.get(item.machine).push(item);
                 });
 
-                // Display each machine's schedule
                 machineSchedules.forEach((items, machineName) => {
                     const machine = machines.find(m => m.name === machineName);
                     const usage = machineUsage.get(machineName);
-                    const efficiency = (usage / machine.getAvailableTime() * 100).toFixed(1);
+                    const efficiency = (usage / machine.getAvailableTime()const efficiency = (usage / machine.getAvailableTime() * 100).toFixed(1);
 
                     let efficiencyClass = 'efficiency-low';
                     if (efficiency > 80) efficiencyClass = 'efficiency-high';
@@ -515,3 +500,4 @@
     </script>
 </body>
 </html>
+                
