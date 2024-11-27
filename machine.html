@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Planning System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            color: #1e293b;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            color: #2563eb;
+            font-size: 1.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 {
+            color: #1e293b;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+
+        th {
+            background: #f8fafc;
+        }
+
+        .data-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .data-item {
+            background: #f8fafc;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Production Planning System</h1>
+            <p>Plan your production schedule efficiently</p>
+        </div>
+
+        <div class="card">
+            <h2>Add Machine</h2>
+            <form id="machineForm">
+                <div class="input-group">
+                    <label>Machine Name</label>
+                    <input type="text" id="machineName" required>
+                </div>
+                <div class="input-group">
+                    <label>Shifts per Day</label>
+                    <input type="number" id="shiftsPerDay" min="1" required>
+                </div>
+                <div class="input-group">
+                    <label>Hours per Shift</label>
+                    <input type="number" id="hoursPerShift" min="1" required>
+                </div>
+                <div class="input-group">
+                    <label>Days per Month</label>
+                    <input type="number" id="daysPerMonth" min="1" required>
+                </div>
+                <button type="submit">Add Machine</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Add Part</h2>
+            <form id="partForm">
+                <div class="input-group">
+                    <label>Part Name</label>
+                    <input type="text" id="partName" required>
+                </div>
+                <div class="input-group">
+                    <label>Cycle Time (minutes)</label>
+                    <input type="number" id="cycleTime" min="1" required>
+                </div>
+                <div class="input-group">
+                    <label>Quantity Needed</label>
+                    <input type="number" id="quantity" min="1" required>
+                </div>
+                <div class="input-group">
+                    <label>Compatible Machines</label>
+                    <div id="machineCheckboxes" class="checkbox-grid">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+                <button type="submit">Add Part</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Current Data</h2>
+            <h3>Machines</h3>
+            <div id="machineList" class="data-list"></div>
+            <h3 style="margin-top: 1rem">Parts</h3>
+            <div id="partList" class="data-list"></div>
+        </div>
+
+        <div class="card">
+            <h2>Generate Schedule</h2>
+            <div class="input-group">
+                <label>Optimization Strategy</label>
+                <select id="optimizationStrategy">
+                    <option value="efficiency">Maximize Machine Efficiency</option>
+                    <option value="completion">Prioritize Part Completion</option>
+                    <option value="balanced">Balanced Approach</option>
+                </select>
+            </div>
+            <button onclick="generateSchedule()">Generate Schedule</button>
+            <div id="schedule-output"></div>
+        </div>
+    </div>
+
+    <script>
+        let machines = [];
+        let parts = [];
+
+        // Event Listeners
+        document.getElementById('machineForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            addMachine();
+        });
+
+        document.getElementById('partForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            addPart();
+        });
+
+        function addMachine() {
+            const machine = {
+                name: document.getElementById('machineName').value,
+                shiftsPerDay: parseInt(document.getElementById('shiftsPerDay').value),
+                hoursPerShift: parseInt(document.getElementById('hoursPerShift').value),
+                daysPerMonth: parseInt(document.getElementById('daysPerMonth').value),
+                getAvailableTime: function() {
+                    return this.shiftsPerDay * this.hoursPerShift * this.daysPerMonth * 60;
+                }
+            };
+
+            machines.push(machine);
+            updateMachineList();
+            updateMachineCheckboxes();
+            document.getElementById('machineForm').reset();
+        }
+
+        function addPart() {
+            const checkboxes = document.querySelectorAll('#machineCheckboxes input:checked');
+            const compatibleMachines = Array.from(checkboxes).map(cb => cb.value);
+
+            if (compatibleMachines.length === 0) {
+                alert('Please select at least one compatible machine');
+                return;
+            }
+
+            const part = {
+                name: document.getElementById('partName').value,
+                cycleTime: parseInt(document.getElementById('cycleTime').value),
+                quantity: parseInt(document.getElementById('quantity').value),
+                compatibleMachines: compatibleMachines,
+                getTimeNeeded: function() {
+                    return this.cycleTime * this.quantity;
+                }
+            };
+
+            parts.push(part);
+            updatePartList();
+            document.getElementById('partForm').reset();
+        }
+
+        function updateMachineList() {
+            const container = document.getElementById('machineList');
+            container.innerHTML = machines.map((machine, index) => `
+                <div class="data-item">
+                    ${machine.name} (${machine.shiftsPerDay}×${machine.hoursPerShift}hr, ${machine.daysPerMonth}d)
+                    <button class="delete-btn" onclick="deleteMachine(${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function updatePartList() {
+            const container = document.getElementById('partList');
+            container.innerHTML = parts.map((part, index) => `
+                <div class="data-item">
+                    ${part.name} (${part.quantity}×, ${part.cycleTime}min)
+                    <button class="delete-btn" onclick="deletePart(${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function updateMachineCheckboxes() {
+            const container = document.getElementById('machineCheckboxes');
+            container.innerHTML = machines.map(machine => `
+                <div>
+                    <input type="checkbox" id="machine_${machine.name}" value="${machine.name}">
+                    <label for="machine_${machine.name}">${machine.name}</label>
+                </div>
+            `).join('');
+        }
+
+        function deleteMachine(index) {
+            machines.splice(index, 1);
+            updateMachineList();
+            updateMachineCheckboxes();
+        }
+
+        function deletePart(index) {
+            parts.splice(index, 1);
+            updatePartList();
+        }
+
+        function generateSchedule() {
+            const schedule = [];
+            const machineUsage = new Map(machines.map(m => [m.name, 0]));
+
+            // Sort parts based on strategy
+            const strategy = document.getElementById('optimizationStrategy').value;
+            const sortedParts = [...parts].sort((a, b) => {
+                if (strategy === 'efficiency') {
+                    return b.getTimeNeeded() - a.getTimeNeeded();
+                } else if (strategy === 'completion') {
+                    return a.compatibleMachines.length - b.compatibleMachines.length;
+                }
+                return b.getTimeNeeded() / b.compatibleMachines.length - 
+                       a.getTimeNeeded() / a.compatibleMachines.length;
+            });
+
+            // Assign parts to machines
+            sortedParts.forEach(part => {
+                const compatibleMachines = machines.filter(m => 
+                    part.compatibleMachines.includes(m.name)
+                ).sort((a, b) => 
+                    machineUsage.get(a.name) / a.getAvailableTime() - 
+                    machineUsage.get(b.name) / b.getAvailableTime()
+                );
+
+                for (const machine of compatibleMachines) {
+                    const currentUsage = machineUsage.get(machine.name);
+                    if (currentUsage + part.getTimeNeeded() <= machine.getAvailableTime()) {
+                        schedule.push({
+                            machine: machine.name,
+                            part: part.name,
+                            quantity: part.quantity,
+                            startTime: currentUsage,
+                            endTime: currentUsage + part.getTimeNeeded()
+                        });
+                        machineUsage.set(machine.name, currentUsage + part.getTimeNeeded());
+                        break;
+                    }
+                }
+            });
+
+            displaySchedule(schedule, machineUsage);
+        }
+
+        function displaySchedule(schedule, machineUsage) {
+            const container = document.getElementById('schedule-output');
+            let html = '<div style="margin-top: 1rem">';
+
+            if (schedule.length === 0) {
+                html += '<p>No valid schedule could be generated. Please check machine capacities and part requirements.</p>';
+            } else {
+                // Group by machine
+                const machineSchedules = new Map();
+                schedule.forEach(item => {
+                    if (!machineSchedules.has(item.machine)) {
+                        machineSchedules.set(item.machine, []);
+                    }
+                    machineSchedules.get(item.machine).push(item);
+                });
+
+                // Display each machine's schedule
+                machineSchedules.forEach((items, machineName) => {
+                    const machine = machines.find(m => m.name === machineName);
+                    const usage = machineUsage.get(machineName);
+                    const efficiency = (usage / machine.getAvailableTime() * 100).toFixed(1);
+
+                    html += `
+                        <div style="margin-bottom: 2rem">
+                            <h3>${machineName} - ${efficiency}% Utilized</h3>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Part</th>
+                                        <th>Quantity</th>
+                                        <th>Start Time (min)</th>
+                                        <th>End Time (min)</th>
+                                        <th>Duration (min)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+
+                    items.forEach(item => {
+                        html += `
+                            <tr>
+                                <td>${item.part}</td>
+                                <td>${item.quantity}</td>
+                                <td>${item.startTime}</td>
+                                <td>${item.endTime}</td>
+                                <td>${item.endTime - item.startTime}</td>
+                            </tr>
+                        `;
+                    });
+
+                    html += '</tbody></table></div>';
+                });
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
