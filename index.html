@@ -141,6 +141,7 @@
         <div class="header">
             <h1>Production Planning System</h1>
             <p>Plan your production schedule efficiently</p>
+            <button onclick="clearAllData()" style="background: #ef4444; margin-top: 1rem;">Clear All Data</button>
         </div>
 
         <div class="card">
@@ -217,6 +218,111 @@
     <script>
         let machines = [];
         let parts = [];
+
+        // Add this right after your variables
+document.addEventListener('DOMContentLoaded', function() {
+    loadSavedData();
+});
+
+function loadSavedData() {
+    const savedMachines = localStorage.getItem('machines');
+    const savedParts = localStorage.getItem('parts');
+    
+    if (savedMachines) {
+        machines = JSON.parse(savedMachines);
+        machines = machines.map(machine => ({
+            ...machine,
+            getAvailableTime: function() {
+                return this.shiftsPerDay * this.hoursPerShift * this.daysPerMonth * 60;
+            }
+        }));
+        updateMachineList();
+        updateMachineCheckboxes();
+    }
+
+    if (savedParts) {
+        parts = JSON.parse(savedParts);
+        parts = parts.map(part => ({
+            ...part,
+            getTimeNeeded: function() {
+                return this.cycleTime * this.quantity;
+            }
+        }));
+        updatePartList();
+    }
+}
+
+function saveMachines() {
+    localStorage.setItem('machines', JSON.stringify(machines));
+}
+
+function saveParts() {
+    localStorage.setItem('parts', JSON.stringify(parts));
+}
+
+function clearAllData() {
+    if (confirm('Are you sure you want to clear all saved data?')) {
+        localStorage.clear();
+        machines = [];
+        parts = [];
+        updateMachineList();
+        updateMachineCheckboxes();
+        updatePartList();
+    }
+}
+        function addMachine() {
+    const machine = {
+        name: document.getElementById('machineName').value,
+        shiftsPerDay: parseInt(document.getElementById('shiftsPerDay').value),
+        hoursPerShift: parseInt(document.getElementById('hoursPerShift').value),
+        daysPerMonth: parseInt(document.getElementById('daysPerMonth').value),
+        getAvailableTime: function() {
+            return this.shiftsPerDay * this.hoursPerShift * this.daysPerMonth * 60;
+        }
+    };
+
+    machines.push(machine);
+    updateMachineList();
+    updateMachineCheckboxes();
+    saveMachines(); // Add this line
+    document.getElementById('machineForm').reset();
+}
+        function addPart() {
+    const checkboxes = document.querySelectorAll('#machineCheckboxes input:checked');
+    const compatibleMachines = Array.from(checkboxes).map(cb => cb.value);
+
+    if (compatibleMachines.length === 0) {
+        alert('Please select at least one compatible machine');
+        return;
+    }
+
+    const part = {
+        name: document.getElementById('partName').value,
+        cycleTime: parseInt(document.getElementById('cycleTime').value),
+        quantity: parseInt(document.getElementById('quantity').value),
+        compatibleMachines: compatibleMachines,
+        getTimeNeeded: function() {
+            return this.cycleTime * this.quantity;
+        }
+    };
+
+    parts.push(part);
+    updatePartList();
+    saveParts(); // Add this line
+    document.getElementById('partForm').reset();
+}
+        function deleteMachine(index) {
+    machines.splice(index, 1);
+    updateMachineList();
+    updateMachineCheckboxes();
+    saveMachines(); // Add this line
+}
+
+function deletePart(index) {
+    parts.splice(index, 1);
+    updatePartList();
+    saveParts(); // Add this line
+}
 
         // Event Listeners
         document.getElementById('machineForm').addEventListener('submit', function(e) {
