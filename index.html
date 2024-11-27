@@ -134,6 +134,29 @@
             gap: 0.5rem;
             margin-top: 0.5rem;
         }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .efficiency-high {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .efficiency-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .efficiency-low {
+            background: #fee2e2;
+            color: #991b1b;
+        }
     </style>
 </head>
 <body>
@@ -219,121 +242,82 @@
         let machines = [];
         let parts = [];
 
-        // Add this right after your variables
-document.addEventListener('DOMContentLoaded', function() {
-    loadSavedData();
-});
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSavedData();
 
-function loadSavedData() {
-    const savedMachines = localStorage.getItem('machines');
-    const savedParts = localStorage.getItem('parts');
-    
-    if (savedMachines) {
-        machines = JSON.parse(savedMachines);
-        machines = machines.map(machine => ({
-            ...machine,
-            getAvailableTime: function() {
-                return this.shiftsPerDay * this.hoursPerShift * this.daysPerMonth * 60;
-            }
-        }));
-        updateMachineList();
-        updateMachineCheckboxes();
-    }
+            // Add form submit handlers
+            document.getElementById('machineForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addMachine();
+            });
 
-    if (savedParts) {
-        parts = JSON.parse(savedParts);
-        parts = parts.map(part => ({
-            ...part,
-            getTimeNeeded: function() {
-                return this.cycleTime * this.quantity;
-            }
-        }));
-        updatePartList();
-    }
-}
-
-function saveMachines() {
-    localStorage.setItem('machines', JSON.stringify(machines));
-}
-
-function saveParts() {
-    localStorage.setItem('parts', JSON.stringify(parts));
-}
-
-function clearAllData() {
-    if (confirm('Are you sure you want to clear all saved data?')) {
-        localStorage.clear();
-        machines = [];
-        parts = [];
-        updateMachineList();
-        updateMachineCheckboxes();
-        updatePartList();
-    }
-}
-        function addMachine() {
-    const machine = {
-        name: document.getElementById('machineName').value,
-        shiftsPerDay: parseInt(document.getElementById('shiftsPerDay').value),
-        hoursPerShift: parseInt(document.getElementById('hoursPerShift').value),
-        daysPerMonth: parseInt(document.getElementById('daysPerMonth').value),
-        getAvailableTime: function() {
-            return this.shiftsPerDay * this.hoursPerShift * this.daysPerMonth * 60;
-        }
-    };
-
-    machines.push(machine);
-    updateMachineList();
-    updateMachineCheckboxes();
-    saveMachines(); // Add this line
-    document.getElementById('machineForm').reset();
-}
-        function addPart() {
-    const checkboxes = document.querySelectorAll('#machineCheckboxes input:checked');
-    const compatibleMachines = Array.from(checkboxes).map(cb => cb.value);
-
-    if (compatibleMachines.length === 0) {
-        alert('Please select at least one compatible machine');
-        return;
-    }
-
-    const part = {
-        name: document.getElementById('partName').value,
-        cycleTime: parseInt(document.getElementById('cycleTime').value),
-        quantity: parseInt(document.getElementById('quantity').value),
-        compatibleMachines: compatibleMachines,
-        getTimeNeeded: function() {
-            return this.cycleTime * this.quantity;
-        }
-    };
-
-    parts.push(part);
-    updatePartList();
-    saveParts(); // Add this line
-    document.getElementById('partForm').reset();
-}
-        function deleteMachine(index) {
-    machines.splice(index, 1);
-    updateMachineList();
-    updateMachineCheckboxes();
-    saveMachines(); // Add this line
-}
-
-function deletePart(index) {
-    parts.splice(index, 1);
-    updatePartList();
-    saveParts(); // Add this line
-}
-
-        // Event Listeners
-        document.getElementById('machineForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            addMachine();
+            document.getElementById('partForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addPart();
+            });
         });
 
-        document.getElementById('partForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            addPart();
-        });
+        function loadSavedData() {
+            const savedMachines = localStorage.getItem('machines');
+            const savedParts = localStorage.getItem('parts');
+            
+            if (savedMachines) {
+                machines = JSON.parse(savedMachines);
+                machines = machines.map(machine => ({
+                    ...machine,
+                    getAvailableTime: function() {
+                        return this.shiftsPerDay * this.hoursPerShift * this.daysPerMonth * 60;
+                    }
+                }));
+                updateMachineList();
+                updateMachineCheckboxes();
+            }
+
+            if (savedParts) {
+                parts = JSON.parse(savedParts);
+                parts = parts.map(part => ({
+                    ...part,
+                    getTimeNeeded: function() {
+                        return this.cycleTime * this.quantity;
+                    }
+                }));
+                updatePartList();
+            }
+        }
+
+        function saveMachines() {
+            localStorage.setItem('machines', JSON.stringify(
+                machines.map(m => ({
+                    name: m.name,
+                    shiftsPerDay: m.shiftsPerDay,
+                    hoursPerShift: m.hoursPerShift,
+                    daysPerMonth: m.daysPerMonth
+                }))
+            ));
+        }
+
+        function saveParts() {
+            localStorage.setItem('parts', JSON.stringify(
+                parts.map(p => ({
+                    name: p.name,
+                    cycleTime: p.cycleTime,
+                    quantity: p.quantity,
+                    compatibleMachines: p.compatibleMachines
+                }))
+            ));
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all saved data?')) {
+                localStorage.clear();
+                machines = [];
+                parts = [];
+                updateMachineList();
+                updateMachineCheckboxes();
+                updatePartList();
+            }
+        }
 
         function addMachine() {
             const machine = {
@@ -349,6 +333,7 @@ function deletePart(index) {
             machines.push(machine);
             updateMachineList();
             updateMachineCheckboxes();
+            saveMachines();
             document.getElementById('machineForm').reset();
         }
 
@@ -373,6 +358,7 @@ function deletePart(index) {
 
             parts.push(part);
             updatePartList();
+            saveParts();
             document.getElementById('partForm').reset();
         }
 
@@ -410,18 +396,19 @@ function deletePart(index) {
             machines.splice(index, 1);
             updateMachineList();
             updateMachineCheckboxes();
+            saveMachines();
         }
 
         function deletePart(index) {
             parts.splice(index, 1);
             updatePartList();
+            saveParts();
         }
 
         function generateSchedule() {
             const schedule = [];
             const machineUsage = new Map(machines.map(m => [m.name, 0]));
 
-            // Sort parts based on strategy
             const strategy = document.getElementById('optimizationStrategy').value;
             const sortedParts = [...parts].sort((a, b) => {
                 if (strategy === 'efficiency') {
@@ -433,7 +420,6 @@ function deletePart(index) {
                        a.getTimeNeeded() / a.compatibleMachines.length;
             });
 
-            // Assign parts to machines
             sortedParts.forEach(part => {
                 const compatibleMachines = machines.filter(m => 
                     part.compatibleMachines.includes(m.name)
@@ -468,6 +454,7 @@ function deletePart(index) {
             if (schedule.length === 0) {
                 html += '<p>No valid schedule could be generated. Please check machine capacities and part requirements.</p>';
             } else {
+                const machineSchedules = new Map();
                 // Group by machine
                 const machineSchedules = new Map();
                 schedule.forEach(item => {
@@ -483,9 +470,16 @@ function deletePart(index) {
                     const usage = machineUsage.get(machineName);
                     const efficiency = (usage / machine.getAvailableTime() * 100).toFixed(1);
 
+                    let efficiencyClass = 'efficiency-low';
+                    if (efficiency > 80) efficiencyClass = 'efficiency-high';
+                    else if (efficiency > 50) efficiencyClass = 'efficiency-medium';
+
                     html += `
                         <div style="margin-bottom: 2rem">
-                            <h3>${machineName} - ${efficiency}% Utilized</h3>
+                            <h3>${machineName}</h3>
+                            <span class="status-badge ${efficiencyClass}">
+                                ${efficiency}% Utilized
+                            </span>
                             <table>
                                 <thead>
                                     <tr>
@@ -518,133 +512,6 @@ function deletePart(index) {
             html += '</div>';
             container.innerHTML = html;
         }
-    </script>
-    <!-- Previous HTML remains the same until the script section -->
-
-<script>
-    let machines = [];
-    let parts = [];
-
-    // Load saved data when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        loadSavedData();
-    });
-
-    function loadSavedData() {
-        // Load machines
-        const savedMachines = localStorage.getItem('machines');
-        if (savedMachines) {
-            machines = JSON.parse(savedMachines);
-            // Reconstruct the methods that were lost in storage
-            machines = machines.map(machine => ({
-                ...machine,
-                getAvailableTime: function() {
-                    return this.shiftsPerDay * this.hoursPerShift * this.daysPerMonth * 60;
-                }
-            }));
-            updateMachineList();
-            updateMachineCheckboxes();
-        }
-
-        // Load parts
-        const savedParts = localStorage.getItem('parts');
-        if (savedParts) {
-            parts = JSON.parse(savedParts);
-            // Reconstruct the methods that were lost in storage
-            parts = parts.map(part => ({
-                ...part,
-                getTimeNeeded: function() {
-                    return this.cycleTime * this.quantity;
-                }
-            }));
-            updatePartList();
-        }
-    }
-
-    function saveMachines() {
-        localStorage.setItem('machines', JSON.stringify(machines));
-    }
-
-    function saveParts() {
-        localStorage.setItem('parts', JSON.stringify(parts));
-    }
-
-    function addMachine() {
-        const machine = {
-            name: document.getElementById('machineName').value,
-            shiftsPerDay: parseInt(document.getElementById('shiftsPerDay').value),
-            hoursPerShift: parseInt(document.getElementById('hoursPerShift').value),
-            daysPerMonth: parseInt(document.getElementById('daysPerMonth').value),
-            getAvailableTime: function() {
-                return this.shiftsPerDay * this.hoursPerShift * this.daysPerMonth * 60;
-            }
-        };
-
-        machines.push(machine);
-        updateMachineList();
-        updateMachineCheckboxes();
-        saveMachines(); // Save after adding
-        document.getElementById('machineForm').reset();
-    }
-
-    function addPart() {
-        const checkboxes = document.querySelectorAll('#machineCheckboxes input:checked');
-        const compatibleMachines = Array.from(checkboxes).map(cb => cb.value);
-
-        if (compatibleMachines.length === 0) {
-            alert('Please select at least one compatible machine');
-            return;
-        }
-
-        const part = {
-            name: document.getElementById('partName').value,
-            cycleTime: parseInt(document.getElementById('cycleTime').value),
-            quantity: parseInt(document.getElementById('quantity').value),
-            compatibleMachines: compatibleMachines,
-            getTimeNeeded: function() {
-                return this.cycleTime * this.quantity;
-            }
-        };
-
-        parts.push(part);
-        updatePartList();
-        saveParts(); // Save after adding
-        document.getElementById('partForm').reset();
-    }
-
-    function deleteMachine(index) {
-        machines.splice(index, 1);
-        updateMachineList();
-        updateMachineCheckboxes();
-        saveMachines(); // Save after deleting
-    }
-
-    function deletePart(index) {
-        parts.splice(index, 1);
-        updatePartList();
-        saveParts(); // Save after deleting
-    }
-
-    // Add a clear data button to the interface
-    function clearAllData() {
-        if (confirm('Are you sure you want to clear all saved data?')) {
-            localStorage.clear();
-            machines = [];
-            parts = [];
-            updateMachineList();
-            updateMachineCheckboxes();
-            updatePartList();
-        }
-    }
-
-    // Add this button to your HTML, perhaps in the header or as a separate card
-    document.querySelector('.header').innerHTML += `
-        <button onclick="clearAllData()" style="background: #ef4444; margin-top: 1rem;">
-            Clear All Data
-        </button>
-    `;
-
-    // Rest of your previous JavaScript code remains the same...
     </script>
 </body>
 </html>
